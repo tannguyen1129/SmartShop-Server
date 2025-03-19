@@ -6,6 +6,8 @@ const { validationResult } = require('express-validator');
 
 exports.login = async (req, res) => {
 
+    try {
+    //Validate input
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
 
@@ -37,7 +39,12 @@ exports.login = async (req, res) => {
         expiresIn: '1h'
     } )
 
-
+    return res.status(200).json({ userId: existingUser.id, username: existingUser.username, token, success: true })
+    
+    } catch (error) {
+        return res.status(500).json({ message: 'Internal server error', succese: false });
+        
+    }
 
 }
 
