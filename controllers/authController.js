@@ -7,47 +7,45 @@ const { validationResult } = require('express-validator');
 exports.login = async (req, res) => {
 
     try {
-    //Validate input
-    const errors = validationResult(req)
-    if (!errors.isEmpty()) {
+     // Validate input
+     const errors = validationResult(req);
+     if (!errors.isEmpty()) {
 
-        const msg = errors.array().map(error => error.msg).join('')
-        return res.status(422).json({ success: false, message: msg })
-    }
+         const msg = errors.array().map(error => error.msg).join('')
+         return res.status(422).json({ message: msg, success: false });
+     }
 
-    const { username, password } = req.body
+     const { username, password } = req.body 
 
-    // check if user exists
-    const existingUser = await models.User.findOne({
+     // check if user exists
+     const existingUser = await models.User.findOne({
         where: {
             username: { [Op.iLike]: username }
         }
-    })
+     })
 
-    if (!existingUser) {
-        return res.status(401).json({message: 'Username or password is incorrect', success: false})
-    }
+     if(!existingUser) {
+        return res.status(401).json({ message: 'Username or password is incorrect', success: false });
+     }
 
-    //check the password
-    const isPasswordValid = await bcrypt.compare(password, existingUser.password)
-    if (!isPasswordValid) {
-        return res.status(401).json({message: 'Username or password is incorrect', success: false});
-    }
+     // check the password 
+     const isPasswordValid = await bcrypt.compare(password, existingUser.password)
+     if(!isPasswordValid) {
+        return res.status(401).json({ message: 'Username or password is incorrect', success: false });
+     }
 
-    //generate jwt token
-    jwt.sign({ userId: existingUser.id }, 'SECRETKEY', {
+     // generate JWT token
+     const token = jwt.sign({ userId: existingUser.id }, 'SECRETKEY', {
         expiresIn: '1h'
-    } )
+     })
 
-    return res.status(200).json({ userId: existingUser.id, username: existingUser.username, token, success: true })
-    
+     return res.status(200).json({ userId: existingUser.id, username: existingUser.username, token, success: true})
+     
     } catch (error) {
-        return res.status(500).json({ message: 'Internal server error', succese: false });
-        
+        return res.status(500).json({ message: 'Internal server error', success: false });
     }
 
 }
-
 
 exports.register = async (req, res) => {
 
@@ -60,30 +58,29 @@ exports.register = async (req, res) => {
     try {
         const { username, password } = req.body
 
-        // Kiểm tra nếu username đã tồn tại
         const existingUser = await models.User.findOne({
-            where: { username: { [Op.iLike]: username } }
+            where: {
+                username: { [Op.iLike]: username }
+            }
         })
 
         if (existingUser) {
-            return res.status(400).json({ message: 'Username is already taken!', success: false })
+            return res.json({ message: 'Username taken!', success: false })
         }
 
-        // Hash mật khẩu trước khi lưu
+        // create a password hash 
         const salt = await bcrypt.genSalt(10)
         const hash = await bcrypt.hash(password, salt)
 
-        // Tạo user mới (Thêm `await` vào đây)
-        await models.User.create({
-            username,
+        // create a new user 
+        const _ = models.User.create({
+            username: username,
             password: hash
         })
 
-        res.status(201).json({ success: true, message: 'User registered successfully!' })
+        res.status(201).json({ success: true })
     } catch (error) {
-        console.error("Error:", error)
-        res.status(500).json({ message: 'Internal server error.', success: false, error: error.message })
+        res.status(500).json({ message: 'Internal server error.', success: false })
     }
-
 
 }
