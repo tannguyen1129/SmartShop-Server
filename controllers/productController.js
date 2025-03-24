@@ -1,10 +1,9 @@
-const { validationResult } = require('express-validator')
 const models = require('../models')
-
+const { validationResult } = require('express-validator');
 
 
 exports.getAllProducts = async (req, res) => {
-    const product = await models.Product.findAll({})
+    const products = await models.Product.findAll({})
     res.json(products)
 }
 
@@ -13,8 +12,8 @@ exports.create = async (req, res) => {
     const errors = validationResult(req)
 
     if (!errors.isEmpty()) {
-        const msg = error.array().map(error => error.msg).join('')
-        return res.status(422).json({message: msg, success: false})
+        const msg = errors.array().map(error => error.msg).join('')
+        return res.status(422).json({ message: msg, success: false });
     }
 
     const { name, description, price, photo_url, user_id } = req.body
@@ -25,13 +24,12 @@ exports.create = async (req, res) => {
             description: description,
             price: price,
             photo_url: photo_url,
-            user_id: user_id 
+            user_id: user_id
         })
 
-        res.status(201).json({success:true, product: newProduct})
+        res.status(201).json({ success: true, product: newProduct })
 
-    } catch(error) {
-        res.status(500).json({message: "Internal server error", success: false});
+    } catch (error) {
+        res.status(500).json({ message: "Internal server error", success: false });
     }
-
 }
